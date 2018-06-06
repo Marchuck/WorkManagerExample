@@ -7,4 +7,6 @@ interface AppDatabase {
     fun getPendingProtocols(): Flowable<List<OfflineProtocol>>
 
     fun getPhotosByProtocolId(id: Long): Flowable<List<OfflineProtocolPhoto>>
+
+
 }

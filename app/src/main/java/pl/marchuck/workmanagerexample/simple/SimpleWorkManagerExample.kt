@@ -1,7 +1,10 @@
 package pl.marchuck.workmanagerexample.simple
 
-import androidx.work.Worker
+import android.content.Context
+import androidx.work.*
+import com.google.gson.Gson
 import pl.marchuck.workmanagerexample.api.ApiService
+import pl.marchuck.workmanagerexample.api.RetrofitRestServiceImpl
 import pl.marchuck.workmanagerexample.database.RoomDb
 import pl.marchuck.workmanagerexample.model.ProtocolMapper
 import javax.inject.Inject
@@ -11,17 +14,58 @@ class SimpleWorkManagerExample @Inject constructor(
         val apiService: ApiService,
         val database: RoomDb) {
 
-
     companion object {
         val PROTOCOL_MODEL = "PROTOCOL_MODEL"
         val PROTOCOL_ID = "PROTOCOL_ID"
         val OFFLINE_ID = "OFFLINE_ID"
+
+        fun getInstance(context: Context): SimpleWorkManagerExample {
+
+            val gson = Gson()
+            val db = RoomDb.getInstance(context)
+            val apiService = RetrofitRestServiceImpl("https//:rand-ompa.ge/", gson, 5)
+            return SimpleWorkManagerExample(ProtocolMapper(gson), apiService, db)
+        }
     }
 
     fun execute() {
+        val disposable = database.protocolDao()
+                .getPendingPhotos()
+                .flatMapIterable { x -> x }
+                .map { value ->
+                    OneTimeWorkRequestBuilder<PostProtocolWork>()
+                            .setInputData(Data.Builder()
+                                    .putString(PROTOCOL_MODEL, mapper.offlineToString(value))
+                                    .build())
+                            .setConstraints(provideConstrains())
+                            .build()
+                }
+                .scan(initialWork(), { currentChainOfWorkRequests, nextWorkRequest ->
+                    currentChainOfWorkRequests.then(nextWorkRequest)
+                })
+                .subscribe({ completedChain ->
 
+                    completedChain.enqueue()
 
+                }, { error ->
+                    println(error)
+                })
     }
+
+    private fun initialWork() = workerManagerInstance().beginWith(successWork())
+
+    private fun provideConstrains() = Constraints.Builder()
+            .setRequiresCharging(true)
+            .build()
+
+
+    private fun successWork(): OneTimeWorkRequest = OneTimeWorkRequestBuilder<InitialWork>().build()
+
+    class InitialWork : Worker() {
+        override fun doWork() = WorkerResult.SUCCESS
+    }
+
+    private fun workerManagerInstance() = WorkManager.getInstance()
 
     inner class PostProtocolWork : Worker() {
 
@@ -41,11 +85,6 @@ class SimpleWorkManagerExample @Inject constructor(
                 database.protocolDao().update(
                         offline.apply { protocol_id = online_protocol_id }
                 )
-
-                outputData.keyValueMap.apply {
-                    put(PROTOCOL_ID, response.protocol_id)
-                    put(OFFLINE_ID, offline.id)
-                }
                 return WorkerResult.SUCCESS
             }
             return WorkerResult.FAILURE
@@ -58,7 +97,6 @@ class SimpleWorkManagerExample @Inject constructor(
         override fun doWork(): WorkerResult {
 
             val protcolId = inputData.getLong(PROTOCOL_ID, -1)
-
 
             return WorkerResult.SUCCESS
 

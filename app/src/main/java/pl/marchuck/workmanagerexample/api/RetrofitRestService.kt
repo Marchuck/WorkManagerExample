@@ -1,7 +1,7 @@
 package pl.marchuck.workmanagerexample.api
 
 import io.reactivex.Single
-import okhttp3.Protocol
+import pl.marchuck.workmanagerexample.model.Protocol
 import pl.marchuck.workmanagerexample.model.ProtocolPhoto
 import pl.marchuck.workmanagerexample.model.ProtocolPhotoResponse
 import pl.marchuck.workmanagerexample.model.ProtocolResponse

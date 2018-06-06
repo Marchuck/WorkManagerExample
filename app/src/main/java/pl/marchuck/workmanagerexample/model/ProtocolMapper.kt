@@ -17,5 +17,6 @@ class ProtocolMapper @Inject constructor(val gson: Gson) {
 
     fun fromStringToOffline(value: String) = gson.fromJson(value, OfflineProtocol::class.java)
 
+    fun offlineToString(value: OfflineProtocol) = gson.toJson(value)
 
 }

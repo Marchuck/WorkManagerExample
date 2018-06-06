@@ -4,8 +4,8 @@ import com.google.gson.Gson
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import io.reactivex.Single
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import okhttp3.logging.HttpLoggingInterceptor
+import pl.marchuck.workmanagerexample.model.Protocol
 import pl.marchuck.workmanagerexample.model.ProtocolPhoto
 import pl.marchuck.workmanagerexample.model.ProtocolPhotoResponse
 import pl.marchuck.workmanagerexample.model.ProtocolResponse
@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 
 class RetrofitRestServiceImpl(endpoint: String,
                               gson: Gson,
-                              timeoutInSeconds: Int) : RetrofitRestService {
+                              timeoutInSeconds: Int) : RetrofitRestService, ApiService {
 
     private val api: RetrofitRestService
 
